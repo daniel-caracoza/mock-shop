@@ -14,21 +14,12 @@ describe('GET /products', () => {
 describe('GET /cart', () => {
     test('returns shopping cart', async() => {
         const response = await request(app).get('/cart'); 
+        console.log(response.body); 
         expect(response.statusCode).toBe(200);
         expect(response.body).toBeTruthy(); 
     })
 })
 
-describe('PUT /cart/add', () => {
-    const testProductId = '1'; 
-    const testProductPrice = '3.50'; 
-    test('add an item to shopping cart', async() => {
-        const response = await request(app).put('/cart/add')
-        .send({id:testProductId, price: testProductPrice});
-        expect(response.statusCode).toBe(200); 
-        expect(response.body.products).toBeTruthy(); 
-    })
-})
 
 afterAll(() => {
     client.quit();

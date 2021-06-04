@@ -7,7 +7,7 @@ const getProducts = require('./cache/utils');
  * @param {*} next 
  */
 const isValidItem = async(req, res, next) => {
-    const {id} = req.body; 
+    const {id} = req.body;
     try {
         const products = await getProducts(); 
         if(products){
@@ -15,7 +15,6 @@ const isValidItem = async(req, res, next) => {
                 return product.id == id; 
             })
             if(found){
-                console.log("item validated!"); 
                 next(); 
             } else {
                 res.status(500).send({msg: "invalid Item"}); 

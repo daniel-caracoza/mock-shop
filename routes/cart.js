@@ -2,21 +2,18 @@ const express = require('express');
 const router = express.Router();
 const { getSession } = require('../db/utils');
 const isValidItem = require('../dataValidation');
+const {initSession} = require('../session'); 
 
-router.use('/add', isValidItem); 
 
 /**
  * returns the shopping cart for the session
  * @returns JSON session.cart
  */
-router.get('/', async (req, res) => {
+router.get('/', initSession,  async (req, res) => {
     try {
         const session = await getSession(req.sessionID);
-        if(session){
-            res.status(200).send(session.cart); 
-        } else {
-            res.status(200).send({msg: `cart is empty.`});
-        }
+        res.status(200).send(session.cart); 
+    
     } catch (error) {
         res.status(500).send({ msg: error.message });
     }
@@ -26,26 +23,28 @@ router.get('/', async (req, res) => {
  * updates the shopping cart and returns the updated cart
  * @returns JSON session.cart
  */
-router.put('/add', (req, res) => {
+router.put('/add',[initSession, isValidItem],  async(req, res) => {
     const { id, price } = req.body;
-    //if shopping cart exists 
-    if (!req.session.cart) {
-        const cart = {
-            products: [],
-            total: 0.0
-        };
-        req.session.cart = cart;
-    }
-    let found = req.session.cart.products.find(({ product_id }) => product_id === id);
-    if (found) {
-        found.quantity += 1;
-    } else {
-        const new_item = { product_id: id, quantity: 1 };
-        req.session.cart.products.push(new_item);
-    }
-    req.session.cart.total += parseFloat(price);
-    res.status(200).send(req.session.cart); 
+    try {
+        const dbSession = await getSession(req.sessionID);
+        if(dbSession){
+            let found = dbSession.cart.products.find(({ product_id }) => product_id === id);
+            if (found) {
+                found.quantity += 1;
+            } else {
+                const new_item = { product_id: id, quantity: 1 };
+                dbSession.cart.products.push(new_item);
+            }
+            dbSession.cart.total += parseFloat(price);
+            req.session.cart = dbSession.cart; 
+            res.status(200).send(dbSession.cart);
+        } else {
+            res.status(500).send({msg: 'session not found'}); 
+        }
 
+    } catch(error){
+        res.status(500).send(error.message); 
+    }
 })
 
 module.exports = router;

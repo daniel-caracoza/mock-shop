@@ -2,10 +2,11 @@ const pool = require('../db/index');
 const express = require('express');
 const router = express.Router();
 
-router.post('/', (req, res) => {
+router.post('/', async(req, res) => {
     const { first_name, last_name, email, address, city, state, zip } = req.body;
-    const products = req.session.cart.products;
-    const payment_total = req.session.cart.total;
+    const session = await getSession(req.sessionID); 
+    const products = session.cart.products;
+    const payment_total = session.cart.total;
     (async () => {
         const client = await pool.connect()
         try {
