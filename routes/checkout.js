@@ -1,12 +1,14 @@
 const pool = require('../db/index');
 const express = require('express');
+const { getProductsDB, getSession } = require('../db/utils');
 const router = express.Router();
 
-router.post('/', async(req, res) => {
+router.post('/', async (req, res) => {
     const { first_name, last_name, email, address, city, state, zip } = req.body;
-    const session = await getSession(req.sessionID); 
-    const products = session.cart.products;
+    const session = await getSession(req.sessionID);
+    const cart = session.cart.products;
     const payment_total = session.cart.total;
+    const productsDB = await getProductsDB();
     (async () => {
         const client = await pool.connect()
         try {
@@ -20,10 +22,14 @@ router.post('/', async(req, res) => {
             const insertCustomerOrderQueryText = 'INSERT INTO customers_orders(customer_id, order_id) VALUES($1, $2)';
             await client.query(insertCustomerOrderQueryText, [res_customer_id.rows[0].id, res_order_id.rows[0].id]);
             const insertOrdersProductsQueryText = 'INSERT INTO orders_products(order_id, product_id, quantity) VALUES ($1, $2, $3)';
-            if (products) {
-                for (const element in products) {
-                    await client.query(insertOrdersProductsQueryText, [res_order_id.rows[0].id, element.product_id, element.quantity])
-                }
+            const updateProductQuantityQuery = 'UPDATE products SET quantity = $1 WHERE id = $2';
+            if (cart) {
+                cart.forEach(async(product) => {
+                    await client.query(insertOrdersProductsQueryText, [res_order_id.rows[0].id, product.product_id, product.quantity])
+                    const productToUpdate = productsDB.find(element => element.id == product.product_id)
+                    const quantityUpdate = productToUpdate.quantity - product.quantity;
+                    await client.query(updateProductQuantityQuery, [quantityUpdate, productToUpdate.id]);
+                });
             }
             await client.query('COMMIT');
             res.status(203).json({ msg: 'Checkout process completed' });
@@ -37,4 +43,4 @@ router.post('/', async(req, res) => {
     })().catch(e => console.error(e.stack))
 })
 
-module.exports = router; 
+module.exports = router;

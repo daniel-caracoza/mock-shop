@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getSession } = require('../db/utils');
-const isValidItem = require('../dataValidation');
+const {isValidItem, isItemAvailable} = require('../dataValidation');
 const {initSession} = require('../session'); 
 
 
@@ -23,7 +23,7 @@ router.get('/', initSession,  async (req, res) => {
  * updates the shopping cart and returns the updated cart
  * @returns JSON session.cart
  */
-router.put('/add',[initSession, isValidItem],  async(req, res) => {
+router.put('/add',[initSession, isValidItem, isItemAvailable],  async(req, res) => {
     const { id, price } = req.body;
     try {
         const dbSession = await getSession(req.sessionID);
@@ -32,7 +32,7 @@ router.put('/add',[initSession, isValidItem],  async(req, res) => {
             if (found) {
                 found.quantity += 1;
             } else {
-                const new_item = { product_id: id, quantity: 1 };
+                const new_item = { product_id: parseInt(id), quantity: 1 };
                 dbSession.cart.products.push(new_item);
             }
             dbSession.cart.total += parseFloat(price);

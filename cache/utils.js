@@ -15,7 +15,7 @@ const getProducts = async() => {
             return JSON.parse(products); 
         } else {
             const productsDB = await getProductsDB(); 
-            client.setex('products', 60, JSON.stringify(productsDB)); 
+            client.set('products', JSON.stringify(productsDB)); 
             return productsDB
         }
     } catch(error){
