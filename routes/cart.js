@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getSession } = require('../db/utils');
-const {isValidItem, isItemAvailable} = require('../dataValidation');
+const {isValidItem} = require('../dataValidation');
 const {initSession} = require('../session'); 
 
 
@@ -23,19 +23,27 @@ router.get('/', initSession,  async (req, res) => {
  * updates the shopping cart and returns the updated cart
  * @returns JSON session.cart
  */
-router.put('/add',[initSession, isValidItem, isItemAvailable],  async(req, res) => {
-    const { id, price } = req.body;
+router.put('/add',[initSession, isValidItem],  async(req, res) => {
+    const {id} = req.body;
+    const cart_prod = req.cart_prod; 
+
     try {
         const dbSession = await getSession(req.sessionID);
         if(dbSession){
-            let found = dbSession.cart.products.find(({ product_id }) => product_id === id);
+            let found = dbSession.cart.products.find(({ product_id }) => product_id == id);
             if (found) {
                 found.quantity += 1;
             } else {
-                const new_item = { product_id: parseInt(id), quantity: 1 };
+                const new_item = {
+                    product_id: cart_prod.id, 
+                    product_name: cart_prod.product_name, 
+                    price: cart_prod.price, 
+                    img_url: cart_prod.img_url, 
+                    quantity: 1
+                }
                 dbSession.cart.products.push(new_item);
             }
-            dbSession.cart.total += parseFloat(price);
+            dbSession.cart.total += parseFloat(cart_prod.price);
             req.session.cart = dbSession.cart; 
             res.status(200).send(dbSession.cart);
         } else {
@@ -44,6 +52,30 @@ router.put('/add',[initSession, isValidItem, isItemAvailable],  async(req, res) 
 
     } catch(error){
         res.status(500).send(error.message); 
+    }
+})
+
+/**
+ * @param id
+ * removes the cart item associated to the given product id
+ */
+router.put('/remove/:id', [initSession], async(req, res) => {
+    const {id} = req.params; 
+    try {
+        const dbSession = await getSession(req.sessionID);
+        const cartProducts = dbSession.cart.products; 
+        const result = cartProducts.filter((element) => {
+            if(element.product_id == id){
+                dbSession.cart.total -= element.price; 
+            }
+            return element.product_id != id; 
+        });
+        dbSession.cart.products = result; 
+        req.session.cart = dbSession.cart; 
+        req.session.save(); 
+        res.status(200).send(req.session.cart); 
+    } catch(error){
+        res.send(error.message); 
     }
 })
 

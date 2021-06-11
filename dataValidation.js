@@ -13,8 +13,14 @@ const isValidItem = async(req, res, next) => {
         if(products){
             const index = products.findIndex(product => product.id == id)
             if(index >= 0){
-                req.product_index = index; 
-                next(); 
+                if(products[index].quantity > 0){
+                    products[index].quantity -= 1; 
+                    req.cart_prod = products[index]
+                    client.set("products", JSON.stringify(products))
+                    next(); 
+                } else {
+                    res.status(500).send("insufficient item quantity"); 
+                }
             } else {
                 res.status(500).send({msg: "invalid Item"}); 
             }
@@ -24,15 +30,4 @@ const isValidItem = async(req, res, next) => {
     }
 }
 
-const isItemAvailable = async(req, res, next) => {
-    const products = await getProducts(); 
-    if(products[req.product_index].quantity > 0){
-        products[req.product_index].quantity -= 1; 
-        client.set("products", JSON.stringify(products))
-        next(); 
-    } else {
-        res.status(500).send({msg: "Insufficient item quantity."})
-    }
-}
-
-module.exports = {isValidItem, isItemAvailable}; 
+module.exports = {isValidItem}; 
