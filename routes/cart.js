@@ -24,13 +24,12 @@ router.get('/', initSession,  async (req, res) => {
  * @returns JSON session.cart
  */
 router.put('/add',[initSession, isValidItem],  async(req, res) => {
-    const {productId} = req.body;
+    const {product_id} = req.body;
     const cart_prod = req.cart_prod; 
-
     try {
         const dbSession = await getSession(req.sessionID);
         if(dbSession){
-            let found = dbSession.cart.products.find(({ id }) => id == productId);
+            let found = dbSession.cart.products.find(element => element.id == product_id)
             if (found) {
                 found.quantity += 1;
             } else {
@@ -56,7 +55,7 @@ router.put('/add',[initSession, isValidItem],  async(req, res) => {
 })
 
 /**
- * @param id
+ * @param productId
  * removes the cart item associated to the given product id
  */
 router.put('/remove/:productId', [initSession], async(req, res) => {
@@ -65,17 +64,44 @@ router.put('/remove/:productId', [initSession], async(req, res) => {
         const dbSession = await getSession(req.sessionID);
         const cartProducts = dbSession.cart.products; 
         const result = cartProducts.filter((element) => {
-            if(element.product_id == productId){
+            if(element.id == productId){
                 dbSession.cart.total -= element.price; 
             }
-            return element.product_id != id; 
+            return element.id != productId; 
         });
         dbSession.cart.products = result; 
         req.session.cart = dbSession.cart; 
         req.session.save(); 
         res.status(200).send(req.session.cart); 
     } catch(error){
-        res.send(error.message); 
+        res.status(500).send(error.message); 
+    }
+})
+
+/**
+ * @param productId
+ * decrements quantity or removes item depending on current cart quantity
+ */
+router.put("/subtract/:productId", [initSession], async(req, res) => {
+    const {productId} = req.params; 
+    try {
+        const dbSession = await getSession(req.sessionID); 
+        const cartProducts = dbSession.cart.products; 
+        cartProducts.forEach(function(element, index, array) {
+            if(element.id == productId){
+                if(element.quantity > 1){ 
+                    element.quantity -= 1;
+                } else {
+                    array.splice(index, 1); 
+                }
+                dbSession.cart.total -= element.price; 
+            }
+        });
+        req.session.cart = dbSession.cart; 
+        req.session.save(); 
+        res.status(200).send(req.session.cart); 
+    } catch(error){
+        res.status(500).send(error.message)
     }
 })
 

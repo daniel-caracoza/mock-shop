@@ -7,11 +7,11 @@ const client = require('./cache/redis');
  * @param {*} next 
  */
 const isValidItem = async(req, res, next) => {
-    const {id} = req.body;
+    const {product_id} = req.body;
     try {
         const products = await getProducts(); 
         if(products){
-            const index = products.findIndex(product => product.id == id)
+            const index = products.findIndex(product => product.id == product_id)
             if(index >= 0){
                 if(products[index].quantity > 0){
                     products[index].quantity -= 1; 
