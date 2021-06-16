@@ -65,7 +65,7 @@ router.put('/remove/:productId', [initSession], async(req, res) => {
         const cartProducts = dbSession.cart.products; 
         const result = cartProducts.filter((element) => {
             if(element.id == productId){
-                dbSession.cart.total -= element.price; 
+                dbSession.cart.total -= (element.quantity * element.price); 
             }
             return element.id != productId; 
         });
