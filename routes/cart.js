@@ -3,6 +3,7 @@ const router = express.Router();
 const { getSession } = require('../db/utils');
 const {isValidItem} = require('../dataValidation');
 const {initSession} = require('../session'); 
+const {addProductQuantity} = require('../cache/utils');
 
 
 /**
@@ -65,7 +66,8 @@ router.put('/remove/:productId', [initSession], async(req, res) => {
         const cartProducts = dbSession.cart.products; 
         const result = cartProducts.filter((element) => {
             if(element.id == productId){
-                dbSession.cart.total -= (element.quantity * element.price); 
+                dbSession.cart.total -= (element.quantity * element.price);
+                addProductQuantity(element.id, element.quantity); 
             }
             return element.id != productId; 
         });
@@ -94,6 +96,7 @@ router.put("/subtract/:productId", [initSession], async(req, res) => {
                 } else {
                     array.splice(index, 1); 
                 }
+                addProductQuantity(element.id, 1); 
                 dbSession.cart.total -= element.price; 
             }
         });

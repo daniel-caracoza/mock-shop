@@ -1,4 +1,4 @@
-const getProducts = require('./cache/utils');
+const {getProducts} = require('./cache/utils');
 const client = require('./cache/redis'); 
 /**
  * middleware function for /cart/add to check if item(id) is valid before adding to cart. 

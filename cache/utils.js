@@ -23,4 +23,18 @@ const getProducts = async() => {
     }
 }
 
-module.exports = getProducts; 
+const addProductQuantity = async(product_id, quantity) => {
+    try {
+        const products = await getProducts();
+        products.find(function(element, index, array){
+            if(element.id == product_id){
+                element.quantity += quantity
+                client.set("products", JSON.stringify(products))
+            }
+        });
+    } catch(error){
+        console.log(error.message); 
+    }
+}
+
+module.exports = {getProducts, addProductQuantity}; 
