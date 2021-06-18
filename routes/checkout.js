@@ -25,8 +25,8 @@ router.post('/', async (req, res) => {
             const updateProductQuantityQuery = 'UPDATE products SET quantity = $1 WHERE id = $2';
             if (cart) {
                 cart.forEach(async(product) => {
-                    await client.query(insertOrdersProductsQueryText, [res_order_id.rows[0].id, product.product_id, product.quantity])
-                    const productToUpdate = productsDB.find(element => element.id == product.product_id)
+                    await client.query(insertOrdersProductsQueryText, [res_order_id.rows[0].id, product.id, product.quantity])
+                    const productToUpdate = productsDB.find(element => element.id == product.id)
                     const quantityUpdate = productToUpdate.quantity - product.quantity;
                     await client.query(updateProductQuantityQuery, [quantityUpdate, productToUpdate.id]);
                 });
