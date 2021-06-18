@@ -9,8 +9,8 @@ const { json } = require('express');
 
 app.use(express.json());
 app.use(sess); 
-app.use('api/v1/products', productsRouter);
-app.use('api/v1/cart', cartRouter); 
-app.use('api/v1/checkout', checkoutRouter); 
+app.use('/api/v1/products', productsRouter);
+app.use('/api/v1/cart', cartRouter); 
+app.use('/api/v1/checkout', checkoutRouter); 
 
 module.exports = app; 
